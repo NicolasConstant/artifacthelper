@@ -86,6 +86,7 @@ def get_card_positions(ss, screen_width, screen_height, verbose=0):
     try:
 
         top_border = 145
+        top_border = 160 #Windowsed mode
         left_border = 613
         right_border = 2260
 
@@ -171,7 +172,7 @@ def grab_artifact():
         'RGB',
         (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
         bmpstr, 'raw', 'BGRX', 0, 1)
-
+    
     ss = np.array(im)
     return ss
 
