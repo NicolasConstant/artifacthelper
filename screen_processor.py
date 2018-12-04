@@ -86,9 +86,11 @@ def get_card_positions(ss, screen_width, screen_height, verbose=0):
     try:
 
         top_border = 145
-        top_border = 160 #Windowsed mode
+        top_border = 172 #Windowsed mode
         left_border = 613
-        right_border = 2260
+        left_border = 615 #Windowsed mode
+        right_border = 2260 
+        right_border = 2263 #Windowsed mode
 
 
         #scale calculation
