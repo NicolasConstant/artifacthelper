@@ -253,7 +253,7 @@ def btnProcessScreen(ll_cur, root, screen_width, screen_height, auto_scan=False)
             l = tk.Label(root, text=txt, justify='right', bg='#222',
                          fg="#DDD", font=("Helvetica 10 bold"), borderwidth=3, relief="solid")
             
-            l.place(anchor='ne', x = left+50, y = top, width=145, height=61)
+            l.place(anchor='ne', x = left+130, y = top, width=145, height=61)
             
             ll.append(l)
 
