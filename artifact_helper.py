@@ -110,12 +110,20 @@ def get_draft_state(screen_width, screen_height):
         mon = sct.monitors[1]
 
         monitor = {
-            "top": mon["top"] + 48*screen_height//1080,
-            "left": mon["left"] + 1385*screen_width//1920,
-            "width": 56*screen_width//1920,
-            "height": 52*screen_height//1080,
+            "top": mon["top"] + 48*screen_height//1440,
+            "left": mon["left"] + 2905*screen_width//3440,
+            "width": 56*screen_width//3440,
+            "height": 52*screen_height//1440,
             "mon": 1,
         }
+
+        # monitor = {
+        #     "top": mon["top"] + 48*screen_height//1080,
+        #     "left": mon["left"] + 1385*screen_width//1920,
+        #     "width": 56*screen_width//1920,
+        #     "height": 52*screen_height//1080,
+        #     "mon": 1,
+        # }
 
         # Grab the data
         img = sct.grab(monitor)
@@ -148,7 +156,8 @@ def auto_hide(ll, root, screen_width, screen_height):
         #mouse
         mx, my = root.winfo_pointerxy()
         
-        inside = mx >= (1385-40)*screen_width//1920 and mx <= (1385 + 56 +20)*screen_width//1920 and my >= (48 -20)*screen_height//1080 and my <= (48 + 52+20)*screen_height//1080
+        #inside = mx >= (1385-40)*screen_width//1920 and mx <= (1385 + 56 +20)*screen_width//1920 and my >= (48 -20)*screen_height//1080 and my <= (48 + 52+20)*screen_height//1080
+        inside = mx >= (2905-40)*screen_width//3440 and mx <= (2905 + 56 +20)*screen_width//3440 and my >= (48 -20)*screen_height//1440 and my <= (48 + 52+20)*screen_height//1440
         if dif > thresh and not inside:
             destroy_list(ll, root)
             img2 = img
@@ -241,8 +250,8 @@ def btnProcessScreen(ll_cur, root, screen_width, screen_height, auto_scan=False)
             if len(card_name) > max_len_name:
                 card_name_str = card_name[:max_len_name-2] + '..'
             txt = card_name_str.rjust(20) + '\n' + str(wr).rjust(20) + '\n' + (str(tier)  + ' ' + price).rjust(20)
-            l = tk.Label(root, text=txt, justify='right', bg='#222', 
-                      fg="#DDD", font=("Helvetica 10 bold"), borderwidth=3, relief="solid")
+            l = tk.Label(root, text=txt, justify='right', bg='#222',
+                         fg="#DDD", font=("Helvetica 10 bold"), borderwidth=3, relief="solid")
             
             l.place(anchor='ne', x = left+50, y = top, width=145, height=61)
             
@@ -250,7 +259,7 @@ def btnProcessScreen(ll_cur, root, screen_width, screen_height, auto_scan=False)
 
     destroy_list(ll_cur, root)
     for ele in ll:
-        ll_cur.append(ele)
+         ll_cur.append(ele)
     return
                 
 def auto_scan(ll, root, screen_width, screen_height):
@@ -325,7 +334,7 @@ def swap_window(root, screen_width, screen_height, first_time=False):
         root.call('wm', 'attributes', '.', '-topmost', '1')
         root.call('wm', 'attributes', '.', '-transparentcolor', bg_color)
         root.title("Artifact Helper")
-        root.geometry("1400x740+%d+%d" % (overlay_x,overlay_y))
+        root.geometry("3000x740+%d+%d" % (overlay_x,overlay_y))
         root.configure(background=bg_color)
         root.lift()
         root.overrideredirect(1) #Remove border

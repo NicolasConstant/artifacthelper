@@ -63,7 +63,7 @@ def get_card_positions(ss, screen_width, screen_height, verbose=0):
     for i in range(screen_width*2//3, screen_width, 1):
         arr = np.max(ss[:bottom_border, i, :])
         #if verbose:
-            #print('>> ', i, ' >> ', 'With max and mean:', np.max(arr), np.min(arr))
+        #print('>> ', i, ' >> ', 'With max and mean:', np.max(arr), np.min(arr))
         if np.max(arr) < 50 and np.mean(arr) < 50:
             right_border = i
             if verbose:
@@ -84,6 +84,12 @@ def get_card_positions(ss, screen_width, screen_height, verbose=0):
             break
 
     try:
+
+        top_border = 145
+        left_border = 613
+        right_border = 2260
+
+
         #scale calculation
         scale = right_border - left_border
 
