@@ -1,8 +1,9 @@
-from screen_processor import ScreenProcessor, numpy_flip
+from screen_processor import ScreenProcessor, numpy_flip, save_debugg_screenshot, grab_artifact
 from concurrent.futures import ThreadPoolExecutor
 from artibuff_scrape import Artibuff_Card
 from tier_list_scrape import read_tier_text, Tier_List_Card
 from market_scrape import get_prices
+from canvas_selection import run_canvas
 import os
 import sys
 import pickle
@@ -14,7 +15,6 @@ from PIL import Image, ImageTk
 from mss import mss
 
 path_root = os.path.dirname(sys.modules['__main__'].__file__)
-
 def path(filename):
     global path_root
     return os.path.join(path_root, filename)
@@ -61,7 +61,7 @@ flag_swap = 1
 coisas = []
 
 launcher_x, launcher_y =  0, 0
-overlay_x, overlay_y = 100, 0
+overlay_x, overlay_y = 0, 0
 x_drag, y_drag = None, None
 
 flag_auto_hide = False
@@ -72,37 +72,12 @@ bg_color = 'magenta'
 
 btn_auto_scan = None
 
+ss_path = path('screenshot_draft.png')
+custom_grid_path = path("custom_grid.npy")
+
 def compare_images(img, img2):
     dif = np.mean(np.abs(img.astype(int) - img2.astype(int)))
     return dif
-
-def save_debugg_screenshot(ss, card_grid, borders):
-
-    top_border, left_border, right_border = borders
-    red = [255, 0, 0]
-    #draw grid on screenshot for debugging
-    for row in range(2):
-        for col in range(6):
-            #quatro cantos da carta
-            top, left, bottom, right = card_grid[row, col, :]
-
-            #paint square with red.
-            #ss.shape = (1080, 1920, 3)
-            ss[top:bottom, left, :] = red
-            ss[top:bottom, right, :] = red
-            ss[top, left:right, :] = red
-            ss[bottom, left:right, :] = red
-
-
-    green = [0, 255, 0]
-    ss[top_border, :, :] = green
-    ss[:, left_border, :] = green
-    ss[:, right_border, :] = green
-
-
-    #save screenshot
-    ss_img = Image.fromarray(ss)
-    ss_img.save(path('screen_shot_debugg.png'),"PNG")
 
 ########### TODO: need to update this
 def get_draft_state(screen_width, screen_height):
@@ -161,12 +136,17 @@ def auto_hide(ll, root, screen_width, screen_height):
 def btnProcessScreen(ll_cur, root, screen_width, screen_height, auto_scan=False):
     global flag_auto_hide, sp, flag_swap
 
-    #inicia auto hide
-    if not flag_auto_hide:
-        executor.submit(auto_hide, ll_cur, root, screen_width, screen_height)
-        flag_auto_hide = True
+    #auto hide disabled for now
+    #if not flag_auto_hide:
+        #executor.submit(auto_hide, ll_cur, root, screen_width, screen_height)
+        #flag_auto_hide = True
         
-    ss, (cards, scores, card_grid, (top_border, left_border, right_border)) = sp.process_screen()
+    #load custom grid
+    if os.path.exists(custom_grid_path):
+        custom_grid = list(np.load(custom_grid_path))
+        sp.custom_grid = custom_grid
+
+    ss, (cards, scores, card_grid, borders) = sp.process_screen()
 
     ll = []
     #destroy_list(ll, root)
@@ -180,11 +160,11 @@ def btnProcessScreen(ll_cur, root, screen_width, screen_height, auto_scan=False)
         label_height = 80
         label_width = 240
 
-        txt = "Error detecting cards.\nAre you on draft screen?"
+        txt = "Error detecting cards.\nAre you on draft screen?\nTry Customizing Grid."
         #save ss for debugg
         if len(card_grid) > 1:
-            save_debugg_screenshot(ss, card_grid, (top_border, left_border, right_border))
-            txt += "\n\nSaved screen_shot_debugg.png \non installation dir."
+            save_debugg_screenshot(ss, card_grid, borders)
+            txt += "\nSaved screenshot_debugg.png \non installation dir."
             label_height=160
             label_width=340
             
@@ -200,16 +180,17 @@ def btnProcessScreen(ll_cur, root, screen_width, screen_height, auto_scan=False)
             ll_cur.append(ele)
         return None
 
-    #save_debugg_screenshot(ss, card_grid, (top_border, left_border, right_border))
+    #save_debugg_screenshot(ss, card_grid, borders)
     for row in range(2):
         for col in range(6):
             #quatro cantos da carta
             top, left, bottom, right = card_grid[row, col, :]
+            card_width = right-left
             
             card_name = fix_dict(cards[row*6+col])
             card_score = scores[row*6+col]
 
-            if card_name == 'Empty Slot':
+            if card_name == 'Empty Slot' or card_name == 'Empty Card':
                 continue
                 
             try:
@@ -227,9 +208,7 @@ def btnProcessScreen(ll_cur, root, screen_width, screen_height, auto_scan=False)
             except:
                 price = ''
                 
-            if card_name == 'Empty Card':
-                continue
-            elif card_name not in stats.keys():
+            if card_name not in stats.keys():
                 print('Card not found:', card_name)
                 continue
                 
@@ -244,7 +223,8 @@ def btnProcessScreen(ll_cur, root, screen_width, screen_height, auto_scan=False)
             l = tk.Label(root, text=txt, justify='right', bg='#222', 
                       fg="#DDD", font=("Helvetica 10 bold"), borderwidth=3, relief="solid")
             
-            l.place(anchor='ne', x = left+50, y = top, width=145, height=61)
+            # print(row, col, 'label start x:' ,left+card_width)
+            l.place(anchor='ne', x = left+card_width, y = top, width=145, height=61)
             
             ll.append(l)
 
@@ -258,10 +238,10 @@ def auto_scan(ll, root, screen_width, screen_height):
     """Automatic scan for new cards"""
     while(1):
         if flag_auto_scan == False or flag_swap == 0:
-            print("Closing auto scan")
+            #print("Closing auto scan")
             break
 
-        print("Auto Scanning")
+        #print("Auto Scanning")
         btnProcessScreen(ll, root, screen_width, screen_height)
         
         #sleeps
@@ -270,7 +250,7 @@ def auto_scan(ll, root, screen_width, screen_height):
 def call_auto_scan(ll, root, screen_width, screen_height, btn_auto_scan):
     global flag_auto_scan
     flag_auto_scan = not flag_auto_scan
-    print("Auto Scan is on?", flag_auto_scan)
+    #print("Auto Scan is on?", flag_auto_scan)
     if flag_auto_scan:
         btn_auto_scan['text'] = '[on] Auto Scan'
     else:
@@ -281,8 +261,22 @@ def call_auto_scan(ll, root, screen_width, screen_height, btn_auto_scan):
 
     executor.submit(auto_scan, ll, root, screen_width, screen_height)
 
-def close_window(root): 
-    root.destroy()
+def call_run_canvas(root):
+    print('Screenshot of the game')
+    try:
+        ss = grab_artifact()
+    except:
+        print('Could not SS the game.')
+
+    #save ss to file
+
+    im = Image.fromarray(ss)
+    im.save(ss_path)
+    
+    print("SS saved to file", ss_path)
+
+    print('Launching Grid Selector')
+    executor.submit(run_canvas, root, ss_path, custom_grid_path)
 
 def StartMove(event):
     #print("ini move")
@@ -325,11 +319,11 @@ def swap_window(root, screen_width, screen_height, first_time=False):
         root.call('wm', 'attributes', '.', '-topmost', '1')
         root.call('wm', 'attributes', '.', '-transparentcolor', bg_color)
         root.title("Artifact Helper")
-        root.geometry("1400x740+%d+%d" % (overlay_x,overlay_y))
+        print("Creating overlay with size:", screen_width, screen_height)
+        root.geometry("%dx%d+%d+%d" % (screen_width, screen_height, overlay_x,overlay_y))
         root.configure(background=bg_color)
         root.lift()
-        root.overrideredirect(1) #Remove border
-        
+        root.overrideredirect(1) #Remove border        
 
         logo = ImageTk.PhotoImage(Image.open(path('resources/banner_1.png')))
         btnImgScan = ImageTk.PhotoImage(Image.open(path('resources/btn_scan_1.png')))
@@ -353,19 +347,19 @@ def swap_window(root, screen_width, screen_height, first_time=False):
             btn_auto_scan['text'] = '[on] Auto Scan'
         else:
             btn_auto_scan['text'] = '[off] Auto Scan'
-        btn_auto_scan.place(x = left_space+160, y = 4, width=130, height=25)
+        btn_auto_scan.place(x = left_space+160+20-5-5-3, y = 4+3, width=130, height=25)
         coisas.append(btn_auto_scan)
 
-        b2 = tk.Button(root, text="?", command=lambda: OpenUrl(), bg='#CCC')
-        b2.place(x = left_space+313, y = 4, width=20, height=25)
-        coisas.append(b2)
+        # b2 = tk.Button(root, text="?", command=lambda: OpenUrl(), bg='#CCC')
+        # b2.place(x = left_space+313, y = 4, width=20, height=25)
+        # coisas.append(b2)
 
         b3 = tk.Button(root, text="X", command = lambda: swap_window(root, screen_width, screen_height), bg='#CCC')
-        b3.place(x = left_space+334, y = 4, width=20, height=25)
+        b3.place(x = left_space+334-3, y = 4+3, width=20, height=25)
         coisas.append(b3)
 
         grip = tk.Button(root, text="<>", bg='#CCC')
-        grip.place(x = left_space+292, y = 4, width=25, height=25)
+        grip.place(x = left_space+286+20-3-2, y = 4+3, width=25, height=25)
         grip.config(image=btnImgMove)
         grip.image = btnImgMove
         grip.bind("<ButtonPress-1>", StartMove)
@@ -374,6 +368,17 @@ def swap_window(root, screen_width, screen_height, first_time=False):
 
         coisas.append(grip)
 
+        #label that lets you know if its using custom grid or not
+        txt = ''
+        if os.path.exists(custom_grid_path):
+            print('Custom Grid file exists:', custom_grid_path)
+            txt = 'Custom Grid Loaded.'
+
+            custom_grid_lb = tk.Label(root, text=txt, justify='left', bg='#1d1d1d',
+                        fg="#ff3b3b", font=("Helvetica 10 bold"), borderwidth=0, relief="solid")
+                
+            custom_grid_lb.place(x = left_space-120+38, y = 4, width=140, height=22)
+            coisas.append(custom_grid_lb)
 
 
         flag_swap = 1
@@ -383,7 +388,7 @@ def swap_window(root, screen_width, screen_height, first_time=False):
         root.title("Artifact Helper")
 
         #sp global
-        sp = ScreenProcessor(path('resources/dhash_v1.pkl'), path('resources/label_to_name.pkl'), screen_width, screen_height)
+        sp = ScreenProcessor(path('resources/dhash_v1.pkl'), path('resources/label_to_name.pkl'))
 
         root.geometry("800x340+%d+%d" % (launcher_x , launcher_y))
         root.configure(background="#333")
@@ -396,6 +401,7 @@ def swap_window(root, screen_width, screen_height, first_time=False):
         
         logo = ImageTk.PhotoImage(Image.open(path('resources/launcher_bg.png')))
         btnImgScan = ImageTk.PhotoImage(Image.open(path('resources/btn_launch_overlay.png')))
+        btnImgGrid = ImageTk.PhotoImage(Image.open(path('resources/btn_launch_grid.png')))
 
         lg = tk.Label(root, image=logo, borderwidth=0, relief="solid")
         lg.image = logo
@@ -407,6 +413,12 @@ def swap_window(root, screen_width, screen_height, first_time=False):
         b.image = btnImgScan #gc hack
         b.place(x = 84, y = 171, width=205, height=57)
         coisas.append(b)
+
+        b_selector = tk.Button(root, text="Select Custom Grid", command=lambda: call_run_canvas(root), bg='#CCC', relief='flat', borderwidth=0)
+        b_selector.config(image=btnImgGrid)
+        b_selector.image = btnImgGrid #gc hack
+        b_selector.place(x = 84+205+40, y = 171, width=205, height=57)
+        coisas.append(b_selector)
         
         b2 = tk.Button(root, text="?", command=lambda: OpenUrl(), bg='#CCC')
         b2.place(x = 776, y = 5, width=20, height=25)
