@@ -1,8 +1,8 @@
 # Artifact Helper
 
-A helper for Valve's Artifact draft mode that displays an overlay on individual cards showing stats gathered from [Artibuff](https://www.artibuff.com/), tier lists (default tier list is Hyped's from [DrawTwo](https://drawtwo.gg/hypeds-limited-tier-list)) and custom annotations.
+A helper for Valve's Artifact draft mode that displays an overlay on individual cards showing stats gathered from [Artibuff](https://www.artibuff.com/), tier lists (default tier list is Hyped's from [DrawTwo](https://drawtwo.gg/hypeds-limited-tier-list)), prices and custom annotations.
 
-![Artifact Helper showing card tiers, win rates and pick rates](screenshots/ScreenShot2.png)
+![Artifact Helper showing card tiers, win rates and pick rates](screenshots/ScreenShot1.png)
 
 ## Installing
 
@@ -16,6 +16,8 @@ Run the Artifact Helper executable file and follow the instructions.
 * **Windows only**
 
 * **Artifact running on borderless window or windowed mode**
+
+* **If you are using [Windows scale options](https://imgur.com/a/exmJC79) (zooms text, apps, icons), you need to disable it by right clicking the Artifact Helper shortcut -> Compatibility tab -> [Change high DPI settings](https://imgur.com/a/ljvFDWU) -> check High DPI scaling override and select Application**
 
 ### **Optional** - Running from source
 
